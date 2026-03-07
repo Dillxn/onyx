@@ -6,3 +6,4 @@ npm-debug.log*
 .build.log
 .build.pid
 .codex
+.next.cache.bak.*

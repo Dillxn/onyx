@@ -248,10 +248,11 @@ fn meshNormal(worldPos: vec3f, pointer: vec2f) -> vec3f {
 }
 
 fn projectedShadow(point: vec2f, pointer: vec2f) -> f32 {
-  let shadowPoint = rotate(point - vec2f(0.12, -0.11), pointer.x * 0.08);
-  let footprint = length(shadowPoint / (vec2f(0.8, 1.02) / OBJECT_SCALE));
-  let softness = 0.08 * (1.0 - 0.35 * abs(pointer.x));
-  return 1.0 - smoothstep(0.78, 1.18 + softness, footprint);
+  let shadowCenter = vec2f(0.0, -0.45 + abs(pointer.y) * 0.008);
+  let shadowPoint = rotate(point - shadowCenter, pointer.x * 0.012);
+  let footprint = length(shadowPoint / (vec2f(0.46, 0.28) / OBJECT_SCALE));
+  let softness = 0.9;
+  return 1.0 - smoothstep(0.3, 1.08 + softness, footprint);
 }
 
 fn sampleOnyxTriplanar(localPos: vec3f, normal: vec3f, time: f32, pointer: vec2f) -> vec3f {
@@ -266,11 +267,6 @@ fn sampleOnyxTriplanar(localPos: vec3f, normal: vec3f, time: f32, pointer: vec2f
     + onyxPattern(xzPoint, time, pointer) * weights.y
     + onyxPattern(yzPoint, time, pointer) * weights.x
   ) / weightSum;
-}
-
-fn backgroundColor(uv: vec2f, point: vec2f, time: f32) -> vec3f {
-  let keepInputsLive = uv.x * 0.0 + point.x * 0.0 + time * 0.0;
-  return vec3f(1.0 - keepInputsLive);
 }
 
 fn onyxPattern(point: vec2f, time: f32, pointer: vec2f) -> vec3f {
@@ -382,23 +378,26 @@ fn fsMain(input: VertexOutput) -> @location(0) vec4f {
 
   var point = input.uv * 2.0 - 1.0;
   point.x = point.x * aspect;
+  let compositionOffset = vec2f(0.0, 0.1);
+  let scenePoint = point - compositionOffset;
 
-  let background = backgroundColor(input.uv, point, time);
-  let shadow = projectedShadow(point, pointer);
-  var color = mix(background, background * 0.82, shadow * 0.16);
+  let shadow = projectedShadow(scenePoint, pointer);
+  let shadowAlpha = shadow * 0.11;
+  var color = vec3f(0.018, 0.022, 0.03) * shadowAlpha;
+  var alpha = shadowAlpha;
 
-  let projectedRadius = length(point / (vec2f(0.98, 1.24) / OBJECT_SCALE));
+  let projectedRadius = length(scenePoint / (vec2f(0.98, 1.24) / OBJECT_SCALE));
 
   if (projectedRadius < 1.28) {
-    let rayOrigin = vec3f(point, 2.55);
+    let rayOrigin = vec3f(scenePoint, 2.55);
     let rayDirection = vec3f(0.0, 0.0, -1.0);
     let trace = traceStone(rayOrigin, rayDirection, pointer);
 
     if (trace.hit > 0.5) {
       let normal = meshNormal(trace.worldPos, pointer);
       let viewDirection = vec3f(0.0, 0.0, 1.0);
-      let lightDirection = normalize(vec3f(-0.34, 0.82, 0.46));
-      let fillDirection = normalize(vec3f(0.78, -0.08, 0.62));
+      let lightDirection = normalize(vec3f(-0.08, 0.9, 0.44));
+      let fillDirection = normalize(vec3f(0.32, -0.18, 0.93));
       let diffuse = saturate(dot(normal, lightDirection));
       let fillDiffuse = saturate(dot(normal, fillDirection));
       let specular = pow(saturate(dot(normal, normalize(lightDirection + viewDirection))), 28.0);
@@ -426,10 +425,11 @@ fn fsMain(input: VertexOutput) -> @location(0) vec4f {
       stone = stone + vec3f(0.2, 0.205, 0.21) * fillSpecular * 0.16;
 
       color = stone;
+      alpha = 1.0;
     }
   }
 
-  return vec4f(color, 1.0);
+  return vec4f(color, alpha);
 }`;
 
 async function loadShaderModule(device) {
@@ -514,7 +514,7 @@ export default function OnyxCanvas() {
       context.configure({
         device,
         format,
-        alphaMode: "opaque",
+        alphaMode: "premultiplied",
       });
 
       const shaderModule = await loadShaderModule(device);
@@ -582,7 +582,7 @@ export default function OnyxCanvas() {
           colorAttachments: [
             {
               view: context.getCurrentTexture().createView(),
-              clearValue: { r: 1, g: 1, b: 1, a: 1 },
+              clearValue: { r: 0, g: 0, b: 0, a: 0 },
               loadOp: "clear",
               storeOp: "store",
             },
