@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  background: #fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #fff;
+}
+
+body {
+  overflow: hidden;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+}
+
+.page-shell {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.stage {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #fff;
+}
+
+.status {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  margin: 0;
+  max-width: min(36rem, calc(100vw - 2rem));
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #7a1d12;
+}
