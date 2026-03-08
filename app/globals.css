@@ -27,6 +27,23 @@ body {
   isolation: isolate;
 }
 
+.hero-description {
+  position: absolute;
+  top: 47.5%;
+  right: 8%;
+  z-index: 2;
+  width: min(24rem, 34vw);
+  margin: 0;
+  font-family: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: clamp(1.05rem, 1.45vw, 1.3rem);
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  text-align: right;
+  color: #7b8189;
+  pointer-events: none;
+}
+
 .hero-wordmark {
   position: absolute;
   top: 33%;
@@ -74,6 +91,14 @@ body {
 }
 
 @media (max-width: 900px) {
+  .hero-description {
+    top: 52.5%;
+    right: 4%;
+    width: min(16rem, 52vw);
+    font-size: clamp(0.9rem, 2.9vw, 1.05rem);
+    line-height: 1.16;
+  }
+
   .hero-wordmark {
     top: 30%;
     font-size: clamp(7rem, 34vw, 14rem);
