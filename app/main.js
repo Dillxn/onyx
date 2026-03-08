@@ -143,10 +143,23 @@ fn rotateY3(point: vec3f, angle: f32) -> vec3f {
   return vec3f(c * point.x + s * point.z, point.y, -s * point.x + c * point.z);
 }
 
-fn objectLocalPosition(point: vec3f, pointer: vec2f) -> vec3f {
+fn stoneMotion(time: f32) -> vec3f {
+  let swimX = sin(time * 0.23) * 0.065 + sin(time * 0.51 + 1.1) * 0.022;
+  let hoverY = sin(time * 0.46 + 0.8) * 0.07 + sin(time * 0.97) * 0.014;
+  let driftZ = sin(time * 0.31 + 2.1) * 0.05;
+  return vec3f(swimX, hoverY, driftZ);
+}
+
+fn stoneTwirl(time: f32) -> f32 {
+  return time * 0.18 + 0.08 * sin(time * 0.24 + 0.3);
+}
+
+fn objectLocalPosition(point: vec3f, pointer: vec2f, time: f32) -> vec3f {
+  let animatedPoint = point - stoneMotion(time);
+  let twirl = stoneTwirl(time);
   let yaw = pointer.x * 0.34;
   let pitch = pointer.y * 0.26;
-  return rotateX3(rotateY3(point, -yaw), -pitch) * OBJECT_SCALE;
+  return rotateX3(rotateY3(rotateY3(animatedPoint, -twirl), -yaw), -pitch) * OBJECT_SCALE;
 }
 
 fn organicRadius(direction: vec3f) -> f32 {
@@ -202,19 +215,19 @@ fn sdOnyxMeshLocal(localPos: vec3f) -> f32 {
   return smoothMax(organic - 0.055, facets, 0.09);
 }
 
-fn sceneDistance(worldPos: vec3f, pointer: vec2f) -> f32 {
-  return sdOnyxMeshLocal(objectLocalPosition(worldPos, pointer)) / OBJECT_SCALE;
+fn sceneDistance(worldPos: vec3f, pointer: vec2f, time: f32) -> f32 {
+  return sdOnyxMeshLocal(objectLocalPosition(worldPos, pointer, time)) / OBJECT_SCALE;
 }
 
-fn traceStone(rayOrigin: vec3f, rayDirection: vec3f, pointer: vec2f) -> TraceResult {
+fn traceStone(rayOrigin: vec3f, rayDirection: vec3f, pointer: vec2f, time: f32) -> TraceResult {
   var distance = 0.0;
   var hit = 0.0;
   var worldPos = rayOrigin;
-  var localPos = objectLocalPosition(worldPos, pointer);
+  var localPos = objectLocalPosition(worldPos, pointer, time);
 
   for (var step = 0; step < 72; step = step + 1) {
     worldPos = rayOrigin + rayDirection * distance;
-    localPos = objectLocalPosition(worldPos, pointer);
+    localPos = objectLocalPosition(worldPos, pointer, time);
 
     let sceneStep = sdOnyxMeshLocal(localPos) / OBJECT_SCALE;
 
@@ -233,24 +246,26 @@ fn traceStone(rayOrigin: vec3f, rayDirection: vec3f, pointer: vec2f) -> TraceRes
   return TraceResult(hit, distance, worldPos, localPos);
 }
 
-fn meshNormal(worldPos: vec3f, pointer: vec2f) -> vec3f {
+fn meshNormal(worldPos: vec3f, pointer: vec2f, time: f32) -> vec3f {
   let epsilon = 0.0035;
   let gradient = vec3f(
-    sceneDistance(worldPos + vec3f(epsilon, 0.0, 0.0), pointer)
-      - sceneDistance(worldPos - vec3f(epsilon, 0.0, 0.0), pointer),
-    sceneDistance(worldPos + vec3f(0.0, epsilon, 0.0), pointer)
-      - sceneDistance(worldPos - vec3f(0.0, epsilon, 0.0), pointer),
-    sceneDistance(worldPos + vec3f(0.0, 0.0, epsilon), pointer)
-      - sceneDistance(worldPos - vec3f(0.0, 0.0, epsilon), pointer)
+    sceneDistance(worldPos + vec3f(epsilon, 0.0, 0.0), pointer, time)
+      - sceneDistance(worldPos - vec3f(epsilon, 0.0, 0.0), pointer, time),
+    sceneDistance(worldPos + vec3f(0.0, epsilon, 0.0), pointer, time)
+      - sceneDistance(worldPos - vec3f(0.0, epsilon, 0.0), pointer, time),
+    sceneDistance(worldPos + vec3f(0.0, 0.0, epsilon), pointer, time)
+      - sceneDistance(worldPos - vec3f(0.0, 0.0, epsilon), pointer, time)
   );
 
   return normalize(gradient);
 }
 
-fn projectedShadow(point: vec2f, pointer: vec2f) -> f32 {
-  let shadowCenter = vec2f(0.0, -0.45 + abs(pointer.y) * 0.008);
-  let shadowPoint = rotate(point - shadowCenter, pointer.x * 0.012);
-  let footprint = length(shadowPoint / (vec2f(0.46, 0.28) / OBJECT_SCALE));
+fn projectedShadow(point: vec2f, pointer: vec2f, time: f32) -> f32 {
+  let motion = stoneMotion(time);
+  let shadowScale = clamp(1.0 - motion.y * 1.15, 0.84, 1.08);
+  let shadowCenter = vec2f(motion.x * 0.4, -0.45 - motion.y * 0.08 + abs(pointer.y) * 0.008);
+  let shadowPoint = rotate(point - shadowCenter, pointer.x * 0.012 + sin(time * 0.16) * 0.02);
+  let footprint = length(shadowPoint / ((vec2f(0.46, 0.28) * shadowScale) / OBJECT_SCALE));
   let softness = 0.9;
   return 1.0 - smoothstep(0.3, 1.08 + softness, footprint);
 }
@@ -381,7 +396,7 @@ fn fsMain(input: VertexOutput) -> @location(0) vec4f {
   let compositionOffset = vec2f(0.0, 0.1);
   let scenePoint = point - compositionOffset;
 
-  let shadow = projectedShadow(scenePoint, pointer);
+  let shadow = projectedShadow(scenePoint, pointer, time);
   let shadowAlpha = shadow * 0.11;
   var color = vec3f(0.018, 0.022, 0.03) * shadowAlpha;
   var alpha = shadowAlpha;
@@ -391,10 +406,10 @@ fn fsMain(input: VertexOutput) -> @location(0) vec4f {
   if (projectedRadius < 1.28) {
     let rayOrigin = vec3f(scenePoint, 2.55);
     let rayDirection = vec3f(0.0, 0.0, -1.0);
-    let trace = traceStone(rayOrigin, rayDirection, pointer);
+    let trace = traceStone(rayOrigin, rayDirection, pointer, time);
 
     if (trace.hit > 0.5) {
-      let normal = meshNormal(trace.worldPos, pointer);
+      let normal = meshNormal(trace.worldPos, pointer, time);
       let viewDirection = vec3f(0.0, 0.0, 1.0);
       let lightDirection = normalize(vec3f(-0.08, 0.9, 0.44));
       let fillDirection = normalize(vec3f(0.32, -0.18, 0.93));
