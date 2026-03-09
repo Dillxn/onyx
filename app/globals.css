@@ -1,16 +1,6 @@
 :root {
   color-scheme: light;
   background: #fff;
-  --hero-wordmark-color: #50555d;
-  --hero-wordmark-inverse-color: #a9a9a9;
-  --hero-description-color: #7b8189;
-  --hero-description-inverse-color: #7d7d7d;
-  --hero-cta-background-color: #383d45;
-  --hero-cta-background-inverse-color: #c1c1c1;
-  --hero-cta-border-color: rgba(40, 44, 50, 0.9);
-  --hero-cta-border-inverse-color: rgba(210, 210, 210, 0.94);
-  --hero-cta-text-on-dark: #f7f8fa;
-  --hero-cta-text-on-light: #11151b;
 }
 
 * {
@@ -44,6 +34,8 @@ body {
   --hero-wordmark-top-vh: 33vh;
   --hero-wordmark-size: clamp(10rem, 31vw, 28rem);
   --hero-wordmark-half-height: calc(var(--hero-wordmark-size) * 0.41);
+  --hero-wordmark-right-edge-trim: calc(var(--hero-wordmark-size) * 0.06);
+  --hero-wordmark-right-edge-fine-tune: clamp(1px, 0.15vw, 2px);
   --hero-panel-top-before-swap-vh: 54.5vh;
   --hero-copy-cta-gap-before-swap: clamp(1.7rem, 2.8vw, 2.2rem);
   --hero-wordmark-copy-gap-before-swap: calc(
@@ -124,7 +116,7 @@ body {
 .hero-panel {
   position: absolute;
   top: 0;
-  right: 0;
+  right: calc((var(--hero-wordmark-right-edge-trim) + var(--hero-wordmark-right-edge-fine-tune)) * -1);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -141,12 +133,12 @@ body {
   line-height: 1.14;
   letter-spacing: -0.02em;
   text-align: right;
-  color: var(--hero-description-color);
+  color: #7b8189;
   pointer-events: none;
 }
 
 .hero-description-inverse {
-  color: var(--hero-description-inverse-color);
+  color: #f7f8fa;
   text-shadow: none;
 }
 
@@ -161,10 +153,10 @@ body {
   margin-right: 0;
   margin-left: auto;
   padding: 0.72rem clamp(1rem, 1.35vw, 1.15rem);
-  border: 1px solid var(--hero-cta-border-color);
+  border: 1px solid rgba(40, 44, 50, 0.9);
   border-radius: 999px;
-  background: var(--hero-cta-background-color);
-  color: var(--hero-cta-text-on-dark);
+  background: #383d45;
+  color: #f7f8fa;
   cursor: pointer;
   text-decoration: none;
   pointer-events: auto;
@@ -173,7 +165,7 @@ body {
 .hero-cta:hover,
 .hero-cta:focus-visible,
 .hero-cta:visited {
-  color: var(--hero-cta-text-on-dark);
+  color: #f7f8fa;
   text-decoration: none;
 }
 
@@ -183,15 +175,15 @@ body {
 }
 
 .hero-cta-inverse {
-  border-color: var(--hero-cta-border-inverse-color);
-  background: var(--hero-cta-background-inverse-color);
-  color: var(--hero-cta-text-on-light);
+  border-color: rgba(245, 247, 250, 0.94);
+  background: #f7f8fa;
+  color: #11151b;
   pointer-events: none;
 }
 
 .hero-cta-inverse .hero-cta-text,
 .hero-cta-inverse .hero-cta-arrow {
-  color: var(--hero-cta-text-on-light);
+  color: #11151b;
   font-weight: 600;
 }
 
@@ -234,7 +226,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.06em;
   line-height: 0.82;
-  color: var(--hero-wordmark-color);
+  color: #50555d;
   text-indent: 0;
   white-space: nowrap;
   opacity: 1;
@@ -244,7 +236,7 @@ body {
 }
 
 .hero-wordmark-inverse {
-  color: var(--hero-wordmark-inverse-color);
+  color: #f7f8fa;
   -webkit-text-stroke: 1px currentColor;
   paint-order: stroke fill;
   text-shadow: none;
