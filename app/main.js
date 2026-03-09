@@ -144,7 +144,10 @@ fn rotateY3(point: vec3f, angle: f32) -> vec3f {
 }
 
 fn stoneMotion(time: f32) -> vec3f {
-  let swimX = sin(time * 0.23) * 0.065 + sin(time * 0.51 + 1.1) * 0.022;
+  let swimX = (
+    sin(time * 0.23) * 0.065
+    + sin(time * 0.51 + 1.1) * 0.022
+  ) * 0.2;
   let hoverY = sin(time * 0.46 + 0.8) * 0.07 + sin(time * 0.97) * 0.014;
   let driftZ = sin(time * 0.31 + 2.1) * 0.05;
   return vec3f(swimX, hoverY, driftZ);
