@@ -462,9 +462,17 @@ async function loadShaderModule(device) {
   return shaderModule;
 }
 
+function dampValue(current, target, deltaSeconds) {
+  const easing = 1 - Math.exp(-deltaSeconds * 8);
+  const next = current + (target - current) * easing;
+  return Math.abs(target - next) < 0.0001 ? target : next;
+}
+
 export default function OnyxCanvas() {
   const canvasRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0 });
+  const pointerTargetRef = useRef({ x: 0, y: 0 });
+  const pointerSettlingRef = useRef(false);
   const animationFrameRef = useRef(0);
   const [error, setError] = useState("");
 
@@ -477,19 +485,38 @@ export default function OnyxCanvas() {
 
     let disposed = false;
     let context = null;
+    let lastFrameTime = 0;
 
     const handlePointerMove = (event) => {
       const rect = canvas.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width;
       const y = (event.clientY - rect.top) / rect.height;
+      const nextX = x * 2 - 1;
+      const nextY = (1 - y) * 2 - 1;
 
-      pointerRef.current.x = x * 2 - 1;
-      pointerRef.current.y = (1 - y) * 2 - 1;
+      pointerTargetRef.current.x = nextX;
+      pointerTargetRef.current.y = nextY;
+
+      if (!pointerSettlingRef.current) {
+        pointerRef.current.x = nextX;
+        pointerRef.current.y = nextY;
+      }
+    };
+
+    const handlePointerEnter = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+
+      pointerTargetRef.current.x = x * 2 - 1;
+      pointerTargetRef.current.y = (1 - y) * 2 - 1;
+      pointerSettlingRef.current = true;
     };
 
     const handlePointerLeave = () => {
-      pointerRef.current.x = 0;
-      pointerRef.current.y = 0;
+      pointerTargetRef.current.x = 0;
+      pointerTargetRef.current.y = 0;
+      pointerSettlingRef.current = true;
     };
 
     const resizeCanvas = () => {
@@ -579,6 +606,24 @@ export default function OnyxCanvas() {
           return;
         }
 
+        const deltaSeconds = lastFrameTime === 0 ? 1 / 60 : (now - lastFrameTime) * 0.001;
+        lastFrameTime = now;
+
+        pointerRef.current.x = dampValue(
+          pointerRef.current.x,
+          pointerTargetRef.current.x,
+          deltaSeconds,
+        );
+        pointerRef.current.y = dampValue(
+          pointerRef.current.y,
+          pointerTargetRef.current.y,
+          deltaSeconds,
+        );
+        pointerSettlingRef.current = !(
+          Math.abs(pointerRef.current.x - pointerTargetRef.current.x) < 0.001
+          && Math.abs(pointerRef.current.y - pointerTargetRef.current.y) < 0.001
+        );
+
         resizeCanvas();
 
         uniforms[0] = canvas.width;
@@ -618,6 +663,7 @@ export default function OnyxCanvas() {
     }
 
     canvas.addEventListener("pointermove", handlePointerMove);
+    canvas.addEventListener("pointerenter", handlePointerEnter);
     canvas.addEventListener("pointerleave", handlePointerLeave);
 
     init().catch((nextError) => {
@@ -632,6 +678,7 @@ export default function OnyxCanvas() {
       disposed = true;
       cancelAnimationFrame(animationFrameRef.current);
       canvas.removeEventListener("pointermove", handlePointerMove);
+      canvas.removeEventListener("pointerenter", handlePointerEnter);
       canvas.removeEventListener("pointerleave", handlePointerLeave);
 
       if (context && typeof context.unconfigure === "function") {

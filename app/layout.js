@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Onyx Flux",
+  title: "Onyx",
   description: "A WebGPU onyx study built with Next.js.",
 };
 
