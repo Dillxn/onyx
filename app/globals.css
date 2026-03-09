@@ -1,6 +1,16 @@
 :root {
   color-scheme: light;
   background: #fff;
+  --hero-wordmark-color: #50555d;
+  --hero-wordmark-inverse-color: #a9a9a9;
+  --hero-description-color: #7b8189;
+  --hero-description-inverse-color: #7d7d7d;
+  --hero-cta-background-color: #383d45;
+  --hero-cta-background-inverse-color: #c1c1c1;
+  --hero-cta-border-color: rgba(40, 44, 50, 0.9);
+  --hero-cta-border-inverse-color: rgba(210, 210, 210, 0.94);
+  --hero-cta-text-on-dark: #f7f8fa;
+  --hero-cta-text-on-light: #11151b;
 }
 
 * {
@@ -30,6 +40,15 @@ body {
   --hero-sweep-size: 300% 300%;
   --hero-sweep-x: 100%;
   --hero-sweep-y: 100%;
+  --hero-wordmark-top: 33%;
+  --hero-wordmark-top-vh: 33vh;
+  --hero-wordmark-size: clamp(10rem, 31vw, 28rem);
+  --hero-wordmark-half-height: calc(var(--hero-wordmark-size) * 0.41);
+  --hero-panel-top-before-swap-vh: 54.5vh;
+  --hero-copy-cta-gap-before-swap: clamp(1.7rem, 2.8vw, 2.2rem);
+  --hero-wordmark-copy-gap-before-swap: calc(
+    var(--hero-panel-top-before-swap-vh) - var(--hero-wordmark-top-vh) - var(--hero-wordmark-half-height)
+  );
 }
 
 .page-shell:has(.hero-cta:hover),
@@ -75,7 +94,7 @@ body {
 .hero-wordmark-layer > .hero-wordmark,
 .sweep-wordmark-layer > .hero-wordmark {
   position: absolute;
-  top: 33%;
+  top: var(--hero-wordmark-top);
   left: 50%;
   transform: translate(-50%, -50%);
 }
@@ -94,7 +113,9 @@ body {
 
 .hero-panel-group {
   position: absolute;
-  top: 54.5%;
+  top: calc(
+    var(--hero-wordmark-top) + var(--hero-wordmark-half-height) + var(--hero-copy-cta-gap-before-swap)
+  );
   left: 50%;
   width: max-content;
   transform: translateX(-50%);
@@ -120,12 +141,12 @@ body {
   line-height: 1.14;
   letter-spacing: -0.02em;
   text-align: right;
-  color: #7b8189;
+  color: var(--hero-description-color);
   pointer-events: none;
 }
 
 .hero-description-inverse {
-  color: #f7f8fa;
+  color: var(--hero-description-inverse-color);
   text-shadow: none;
 }
 
@@ -136,14 +157,14 @@ body {
   gap: 0.5rem;
   width: fit-content;
   max-width: 100%;
-  margin-top: clamp(1.7rem, 2.8vw, 2.2rem);
+  margin-top: var(--hero-wordmark-copy-gap-before-swap);
   margin-right: 0;
   margin-left: auto;
   padding: 0.72rem clamp(1rem, 1.35vw, 1.15rem);
-  border: 1px solid rgba(40, 44, 50, 0.9);
+  border: 1px solid var(--hero-cta-border-color);
   border-radius: 999px;
-  background: #383d45;
-  color: #f7f8fa;
+  background: var(--hero-cta-background-color);
+  color: var(--hero-cta-text-on-dark);
   cursor: pointer;
   text-decoration: none;
   pointer-events: auto;
@@ -152,7 +173,7 @@ body {
 .hero-cta:hover,
 .hero-cta:focus-visible,
 .hero-cta:visited {
-  color: #f7f8fa;
+  color: var(--hero-cta-text-on-dark);
   text-decoration: none;
 }
 
@@ -162,15 +183,15 @@ body {
 }
 
 .hero-cta-inverse {
-  border-color: rgba(245, 247, 250, 0.94);
-  background: #f7f8fa;
-  color: #11151b;
+  border-color: var(--hero-cta-border-inverse-color);
+  background: var(--hero-cta-background-inverse-color);
+  color: var(--hero-cta-text-on-light);
   pointer-events: none;
 }
 
 .hero-cta-inverse .hero-cta-text,
 .hero-cta-inverse .hero-cta-arrow {
-  color: #11151b;
+  color: var(--hero-cta-text-on-light);
   font-weight: 600;
 }
 
@@ -209,11 +230,11 @@ body {
   z-index: 0;
   margin: 0;
   font-family: "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: clamp(10rem, 31vw, 28rem);
+  font-size: var(--hero-wordmark-size);
   font-weight: 700;
   letter-spacing: -0.06em;
   line-height: 0.82;
-  color: #50555d;
+  color: var(--hero-wordmark-color);
   text-indent: 0;
   white-space: nowrap;
   opacity: 1;
@@ -223,7 +244,7 @@ body {
 }
 
 .hero-wordmark-inverse {
-  color: #f7f8fa;
+  color: var(--hero-wordmark-inverse-color);
   -webkit-text-stroke: 1px currentColor;
   paint-order: stroke fill;
   text-shadow: none;
@@ -258,13 +279,12 @@ body {
 }
 
 @media (max-width: 900px) {
-  .hero-wordmark-layer > .hero-wordmark,
-  .sweep-wordmark-layer > .hero-wordmark {
-    top: 30%;
-  }
-
-  .hero-panel-group {
-    top: 47%;
+  .page-shell {
+    --hero-wordmark-top: 30%;
+    --hero-wordmark-top-vh: 30vh;
+    --hero-wordmark-size: clamp(7rem, 34vw, 14rem);
+    --hero-panel-top-before-swap-vh: 47vh;
+    --hero-copy-cta-gap-before-swap: 1.35rem;
   }
 
   .hero-panel {
@@ -277,7 +297,6 @@ body {
   }
 
   .hero-cta {
-    margin-top: 1.35rem;
     padding-left: 0.95rem;
     padding-right: 0.95rem;
   }
@@ -287,15 +306,14 @@ body {
   }
 
   .hero-wordmark {
-    font-size: clamp(7rem, 34vw, 14rem);
     letter-spacing: -0.045em;
     text-indent: 0;
   }
 }
 
 @media (max-width: 640px) {
-  .hero-panel-group {
-    top: 44%;
+  .page-shell {
+    --hero-panel-top-before-swap-vh: 44vh;
   }
 }
 
